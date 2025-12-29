@@ -4,6 +4,9 @@ node_modules/
 # Build output
 dist/
 
+# Local archived repo (not part of this project)
+CNA-MAP_--/
+
 # Environment files
 .env
 .env.local
