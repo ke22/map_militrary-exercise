@@ -7,4 +7,18 @@ export default defineConfig({
   // 支援子路徑部署，例如 /exercises-map/
   // 使用: VITE_BASE_PATH=/exercises-map/ npm run build
   base: process.env.VITE_BASE_PATH || '/',
+  build: {
+    rollupOptions: {
+      output: {
+        // 添加版本号到文件名避免缓存问题
+        entryFileNames: `assets/[name]-[hash].js`,
+        chunkFileNames: `assets/[name]-[hash].js`,
+        assetFileNames: `assets/[name]-[hash].[ext]`,
+      },
+    },
+  },
+  // 开发模式下也添加版本查询参数
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
+  },
 })

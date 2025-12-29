@@ -12,22 +12,8 @@ export function LayerControl({
     events,
     selectedEventIds,
     onSelectionChange,
-    dataMode,
 }: LayerControlProps) {
-    const handleSelectAll = () => {
-        onSelectionChange(events.map((e) => e.eventId))
-    }
 
-    const handleClearAll = () => {
-        onSelectionChange([])
-    }
-
-    const handleSelectLatest = () => {
-        const latest = events.reduce((prev, curr) =>
-            curr.order > prev.order ? curr : prev
-        )
-        onSelectionChange([latest.eventId])
-    }
 
     const handleToggle = (eventId: string) => {
         if (selectedEventIds.includes(eventId)) {
@@ -49,12 +35,7 @@ export function LayerControl({
                 </span>
             </div>
 
-            {/* Quick Actions */}
-            <div className="quick-actions">
-                <button className="apple-chip" onClick={handleSelectAll}>全部</button>
-                <button className="apple-chip" onClick={handleClearAll}>清除</button>
-                <button className="apple-chip primary" onClick={handleSelectLatest}>最近</button>
-            </div>
+
 
             {/* Checkbox List */}
             <div className="checkbox-list scrollable">
@@ -83,7 +64,6 @@ export function LayerControl({
 
             {/* Reference Legend */}
             <div className="reference-section">
-                <span className="section-title">參考圖層</span>
                 <div className="ref-items">
                     <div className="ref-item">
                         <span className="ref-line adiz" />
@@ -94,17 +74,17 @@ export function LayerControl({
                         <span>海峽中線</span>
                     </div>
                     <div className="ref-item">
-                        <span className="ref-line maritime" />
-                        <span>領海/鄰接區</span>
+                        <span className="ref-line territorial-baselines" />
+                        <span>領海基線</span>
+                    </div>
+                    <div className="ref-item">
+                        <span className="ref-line territorial-sea" />
+                        <span>領海</span>
                     </div>
                 </div>
             </div>
 
-            {/* Footer */}
-            <div className="control-footer">
-                <p>模式：{dataMode === 'mixed' ? 'Tileset + GeoJSON' : dataMode === 'tileset' ? 'Tileset' : 'GeoJSON'}</p>
-                <p>最後更新：2025/12/29</p>
-            </div>
+
         </div>
     )
 }

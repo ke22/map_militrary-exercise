@@ -1,6 +1,6 @@
 import './LanguageSwitcher.css'
 
-export type LanguageCode = 'zh-Hant' | 'en' | 'ja' | 'id'
+export type LanguageCode = 'zh-Hant' | 'en' | 'ja'
 
 interface LanguageSwitcherProps {
     currentLanguage: LanguageCode
@@ -11,7 +11,6 @@ const languages: { code: LanguageCode; label: string }[] = [
     { code: 'zh-Hant', label: '繁中' },
     { code: 'en', label: 'English' },
     { code: 'ja', label: '日本語' },
-    { code: 'id', label: 'Indo' },
 ]
 
 export function LanguageSwitcher({

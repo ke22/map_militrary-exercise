@@ -1,18 +1,20 @@
 .layer-control.ios-style {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    width: 320px;
-    max-height: calc(100vh - 120px);
-    background: rgba(28, 28, 30, 0.7);
-    backdrop-filter: blur(30px) saturate(180%);
-    -webkit-backdrop-filter: blur(30px) saturate(180%);
-    border-radius: 20px;
-    border: 0.5px solid rgba(255, 255, 255, 0.15);
+    top: 0;
+    left: 0;
+    width: 240px;
+    max-height: 100vh;
+    background: rgba(18, 18, 20, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 0 0 16px 0;
+    border: none;
+    border-right: 0.5px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.15);
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     z-index: 1001;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     color: white;
@@ -38,36 +40,7 @@
     border-radius: 10px;
 }
 
-/* Chips */
-.quick-actions {
-    display: flex;
-    gap: 8px;
-}
 
-.apple-chip {
-    flex: 1;
-    height: 36px;
-    border-radius: 10px;
-    border: none;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.apple-chip:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.apple-chip.primary {
-    background: #007aff;
-}
-
-.apple-chip:active {
-    transform: scale(0.96);
-}
 
 /* Row Styling */
 .checkbox-list.scrollable {
@@ -241,7 +214,15 @@
 }
 
 .ref-line.maritime {
-    border-top: 2px dotted rgba(255, 255, 255, 0.7);
+    border-top: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.ref-line.territorial-baselines {
+    border-top: 1.5px solid rgba(255, 255, 255, 0.9);
+}
+
+.ref-line.territorial-sea {
+    border-top: 1.5px solid rgba(255, 255, 255, 0.9);
 }
 
 /* Footer */

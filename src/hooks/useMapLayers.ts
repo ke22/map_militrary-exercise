@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react'
-import mapboxgl, { Map, LngLatLike } from 'mapbox-gl'
+import mapboxgl, { Map } from 'mapbox-gl'
 import { ExerciseEvent, DataMode } from '../types'
 
 interface UseMapLayersProps {
@@ -20,32 +20,141 @@ export function useMapLayers({
     const syncLayers = useCallback(() => {
         if (!map || !map.isStyleLoaded()) return
 
-        // 1. Reference Layers
+        // 0. Base Map Enhancements (White boundaries & Mapbox Countries)
+        if (!map.getSource('mapbox-countries')) {
+            map.addSource('mapbox-countries', {
+                type: 'vector',
+                url: 'mapbox://mapbox.country-boundaries-v1'
+            });
+        }
+        if (!map.getLayer('country-boundaries-white')) {
+            map.addLayer({
+                id: 'country-boundaries-white',
+                type: 'line',
+                source: 'mapbox-countries',
+                'source-layer': 'country_boundaries',
+                paint: {
+                    'line-color': '#ffffff',
+                    'line-width': 0.3,
+                    'line-opacity': 0.5
+                }
+            }, 'admin-0-boundary-disputed'); // Try to place before admin boundaries if possible
+        }
+
+        const style = map.getStyle()
+        if (style && style.layers) {
+            style.layers.forEach(layer => {
+                if (layer.id.includes('admin-0-boundary') || layer.id.includes('admin-1-boundary') || layer.id.includes('admin-2-boundary') || layer.id.includes('maritime')) {
+                    try {
+                        map.setPaintProperty(layer.id, 'line-color', '#ffffff')
+                        map.setPaintProperty(layer.id, 'line-width', 0.2)
+                        map.setPaintProperty(layer.id, 'line-opacity', 0.4)
+                        map.setLayoutProperty(layer.id, 'visibility', 'visible')
+                    } catch (e) { }
+                }
+                if (layer.id.includes('country-label')) {
+                    try {
+                        map.setPaintProperty(layer.id, 'text-color', '#ffffff')
+                        map.setPaintProperty(layer.id, 'text-halo-color', 'rgba(0,0,0,0.9)')
+                        map.setPaintProperty(layer.id, 'text-halo-width', 2)
+                    } catch (e) { }
+                }
+
+            })
+        }
+
+        // 1. Reference Layers (always visible by default)
         const addRefLayer = (id: string, url: string, sourceLayer: string, dash: number[], width: number, opacity: number, filter?: any[]) => {
-            const sid = `source-${id}`
-            if (!map.getSource(sid)) {
-                map.addSource(sid, { type: 'vector', url })
-            }
-            if (!map.getLayer(id)) {
-                map.addLayer({
-                    id,
-                    type: 'line',
-                    source: sid,
-                    'source-layer': sourceLayer,
-                    ...(filter && { filter }),
-                    paint: {
-                        'line-color': '#ffffff',
-                        'line-width': width,
-                        'line-dasharray': dash,
-                        'line-opacity': opacity,
-                    },
-                })
+            try {
+                const sid = `source-${id}`
+                
+                // Add source if it doesn't exist
+                if (!map.getSource(sid)) {
+                    map.addSource(sid, { type: 'vector', url })
+                }
+                
+                // Try to add layer immediately
+                if (!map.getLayer(id)) {
+                    try {
+                        map.addLayer({
+                            id,
+                            type: 'line',
+                            source: sid,
+                            'source-layer': sourceLayer,
+                            ...(filter && { filter }),
+                            layout: {
+                                visibility: 'visible'
+                            },
+                            paint: {
+                                'line-color': '#ffffff',
+                                'line-width': width,
+                                'line-dasharray': dash,
+                                'line-opacity': opacity,
+                            },
+                        })
+                    } catch (e) {
+                        // If layer add fails (source not ready), wait for source to load
+                        const sourceLoadHandler = () => {
+                            try {
+                                if (!map.getLayer(id)) {
+                                    map.addLayer({
+                                        id,
+                                        type: 'line',
+                                        source: sid,
+                                        'source-layer': sourceLayer,
+                                        ...(filter && { filter }),
+                                        layout: {
+                                            visibility: 'visible'
+                                        },
+                                        paint: {
+                                            'line-color': '#ffffff',
+                                            'line-width': width,
+                                            'line-dasharray': dash,
+                                            'line-opacity': opacity,
+                                        },
+                                    })
+                                }
+                                map.off('sourcedata', sourceLoadHandler)
+                            } catch (err) {
+                                // Source still not ready, keep waiting
+                            }
+                        }
+                        map.on('sourcedata', sourceLoadHandler)
+                    }
+                } else {
+                    // Ensure visibility is set to visible if layer already exists
+                    try {
+                        map.setLayoutProperty(id, 'visibility', 'visible')
+                    } catch (e) {
+                        // Layer might not be ready yet
+                    }
+                }
+            } catch (e) {
+                console.warn(`Failed to add reference layer ${id}:`, e)
+                // Continue with other layers even if this one fails
             }
         }
 
-        addRefLayer('ref-adiz-line', 'mapbox://cnagraphicdesign.6aqd2wlm', 'Taiwans_ADIZ-3uff2b', [4, 2], 2, 0.8)
-        addRefLayer('ref-median-line', 'mapbox://cnagraphicdesign.2ktysf7p', 'true', [8, 4], 2.5, 0.9)
-        addRefLayer('ref-maritime-line', 'mapbox://cnagraphicdesign.bahwakzv', 'cartodb-query_1-90kmsi', [1, 2], 1.5, 0.7, ['==', ['get', 'name'], 'Taiwan'])
+        addRefLayer('ref-adiz-line', 'mapbox://cnagraphicdesign.6aqd2wlm', 'Taiwans_ADIZ-3uff2b', [4, 2], 1, 0.7)
+        addRefLayer('ref-median-line', 'mapbox://cnagraphicdesign.2ktysf7p', 'true', [8, 4], 1, 0.8)
+        
+        // Maritime boundaries - Taiwan Territorial Baselines and Territorial Sea
+        // Tileset: cnagraphicdesign.bahwakzv
+        // Source layer: cartodb-query_1-90kmsi (note: underscore, not hyphen)
+        // Field name: name (lowercase)
+        // Filter for Taiwan Territorial Baselines (1999)
+        addRefLayer('ref-territorial-baselines', 'mapbox://cnagraphicdesign.bahwakzv', 'cartodb-query_1-90kmsi', [], 1, 0.9, [
+            '==', 
+            ['get', 'name'], 
+            'Taiwan Territorial Baselines (1999)'
+        ])
+        
+        // Filter for Taiwan Territorial Sea
+        addRefLayer('ref-territorial-sea', 'mapbox://cnagraphicdesign.bahwakzv', 'cartodb-query_1-90kmsi', [], 1, 0.9, [
+            '==', 
+            ['get', 'name'], 
+            'Taiwan Territorial Sea'
+        ])
 
         // 2. Exercise Source (GeoJSON)
         if (dataMode === 'geojson' || dataMode === 'mixed') {
@@ -55,6 +164,10 @@ export function useMapLayers({
                     data: './data/exercises.geojson',
                 })
             }
+            // Force a retry of syncLayers if source was just added to ensure layers find it
+            // if (!map.getLayer(`exercises-fill-${events[0].eventId}`)) {
+            //     setTimeout(syncLayers, 0)
+            // }
         }
 
         // 3. Exercise Layers (Per Event)
@@ -73,12 +186,40 @@ export function useMapLayers({
                     map.addSource(sid, { type: 'vector', url: `mapbox://${event.tilesetId}` })
                 }
 
+            if (!map.getLayer(fillId)) {
+                map.addLayer({
+                    id: fillId,
+                    type: 'fill',
+                    source: sid,
+                    'source-layer': event.sourceLayer!,
+                    layout: {
+                        visibility: visibility
+                    },
+                    paint: { 'fill-color': event.color, 'fill-opacity': 0.35 }
+                })
+            }
+            if (!map.getLayer(lineId)) {
+                map.addLayer({
+                    id: lineId,
+                    type: 'line',
+                    source: sid,
+                    'source-layer': event.sourceLayer!,
+                    layout: {
+                        visibility: visibility
+                    },
+                    paint: { 'line-color': event.color, 'line-width': 2 }
+                })
+            }
+            } else {
                 if (!map.getLayer(fillId)) {
                     map.addLayer({
                         id: fillId,
                         type: 'fill',
-                        source: sid,
-                        'source-layer': event.sourceLayer!,
+                        source: 'exercises-geojson',
+                        filter: ['==', ['get', 'eventId'], event.eventId],
+                        layout: {
+                            visibility: visibility
+                        },
                         paint: { 'fill-color': event.color, 'fill-opacity': 0.35 }
                     })
                 }
@@ -86,27 +227,11 @@ export function useMapLayers({
                     map.addLayer({
                         id: lineId,
                         type: 'line',
-                        source: sid,
-                        'source-layer': event.sourceLayer!,
-                        paint: { 'line-color': event.color, 'line-width': 2 }
-                    })
-                }
-            } else {
-                if (!map.getLayer(fillId) && map.getSource('exercises-geojson')) {
-                    map.addLayer({
-                        id: fillId,
-                        type: 'fill',
                         source: 'exercises-geojson',
                         filter: ['==', ['get', 'eventId'], event.eventId],
-                        paint: { 'fill-color': event.color, 'fill-opacity': 0.35 }
-                    })
-                }
-                if (!map.getLayer(lineId) && map.getSource('exercises-geojson')) {
-                    map.addLayer({
-                        id: lineId,
-                        type: 'line',
-                        source: 'exercises-geojson',
-                        filter: ['==', ['get', 'eventId'], event.eventId],
+                        layout: {
+                            visibility: visibility
+                        },
                         paint: { 'line-color': event.color, 'line-width': 2 }
                     })
                 }
@@ -122,75 +247,35 @@ export function useMapLayers({
     useEffect(() => {
         if (!map) return
 
-        const handleLoad = () => syncLayers()
+        const handleLoad = () => {
+            // Wait a bit for sources to load, then sync layers
+            setTimeout(() => {
+                syncLayers()
+            }, 100)
+        }
 
         if (map.isStyleLoaded()) {
+            // If style is already loaded, wait for sources
+            map.once('sourcedata', () => {
+                setTimeout(() => {
+                    syncLayers()
+                }, 100)
+            })
             syncLayers()
-        } else {
-            map.on('load', handleLoad)
         }
+
+        map.on('load', handleLoad)
+        map.on('styledata', handleLoad)
+        map.on('sourcedata', handleLoad)
 
         return () => {
             map.off('load', handleLoad)
+            map.off('styledata', handleLoad)
+            map.off('sourcedata', handleLoad)
         }
     }, [map, syncLayers])
 
-    // Setup Popup (Independant of sync but shares map/events)
-    useEffect(() => {
-        if (!map) return
-
-        const popup = new mapboxgl.Popup({ closeButton: true, closeOnClick: true })
-
-        const handleClick = (e: mapboxgl.MapMouseEvent) => {
-            const layerIds = events.map((ev) => `exercises-fill-${ev.eventId}`)
-            const existingLayers = layerIds.filter((id) => map.getLayer(id))
-            if (existingLayers.length === 0) return
-
-            const features = map.queryRenderedFeatures(e.point, { layers: existingLayers })
-            if (features.length === 0) { popup.remove(); return }
-
-            const feature = features[0]
-            if (!feature.layer) return
-            const eventId = feature.layer.id.replace('exercises-fill-', '')
-            const event = events.find((ev) => ev.eventId === eventId)
-            if (!event) return
-
-            const props = feature.properties || {}
-            const zoneName = props.zoneName || props.name || props.Name || ''
-
-            const html = `
-                <div style="padding: 10px; max-width: 240px; font-family: -apple-system, sans-serif;">
-                    <h4 style="margin: 0 0 8px 0; color: ${event.color}; font-size: 13px; font-weight: 600;">${event.title}</h4>
-                    <p style="margin: 0 0 4px 0; font-size: 11px; color: #a0a0b0;">📅 ${event.dateLabel}</p>
-                    ${zoneName ? `<p style="margin: 0 0 4px 0; font-size: 11px; color: #a0a0b0;">📍 ${zoneName}</p>` : ''}
-                    <p style="margin: 0; font-size: 10px; color: #606070;">${event.sourceLabel}</p>
-                </div>
-            `
-            popup.setLngLat(e.lngLat as LngLatLike).setHTML(html).addTo(map)
-        }
-
-        const enterHandler = () => { map.getCanvas().style.cursor = 'pointer' }
-        const leaveHandler = () => { map.getCanvas().style.cursor = '' }
-
-        map.on('click', handleClick)
-
-        // Add hover effects for all potential exercise layers
-        events.forEach(event => {
-            const id = `exercises-fill-${event.eventId}`
-            map.on('mouseenter', id, enterHandler)
-            map.on('mouseleave', id, leaveHandler)
-        })
-
-        return () => {
-            map.off('click', handleClick)
-            popup.remove()
-            events.forEach(event => {
-                const id = `exercises-fill-${event.eventId}`
-                map.off('mouseenter', id, enterHandler)
-                map.off('mouseleave', id, leaveHandler)
-            })
-        }
-    }, [map, events])
+    // Popup functionality removed as requested
 
     return null
 }

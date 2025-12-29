@@ -4,11 +4,19 @@ import { LayerControl } from './components/LayerControl'
 import { LanguageSwitcher, LanguageCode } from './components/LanguageSwitcher'
 import { ExerciseEvent, DataMode } from './types'
 import eventsData from '../data/events.json'
+import cnaLogo from '../cna_logo.svg'
 import './App.css'
 
 function App() {
     const [events] = useState<ExerciseEvent[]>(eventsData as ExerciseEvent[])
-    const [selectedEventIds, setSelectedEventIds] = useState<string[]>([])
+    const [selectedEventIds, setSelectedEventIds] = useState<string[]>(() => {
+        if (!eventsData || (eventsData as any[]).length === 0) return []
+        const data = eventsData as ExerciseEvent[]
+        const latest = data.reduce((prev, curr) =>
+            curr.order > prev.order ? curr : prev
+        )
+        return [latest.eventId]
+    })
     const [configError, setConfigError] = useState<string | null>(null)
     const [language, setLanguage] = useState<LanguageCode>('zh-Hant')
 
@@ -16,15 +24,7 @@ function App() {
     const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN
     const dataMode: DataMode = (import.meta.env.VITE_DATA_MODE as DataMode) || 'mixed'
 
-    // Initialize with all events selected (defaultOn = true)
-    useEffect(() => {
-        const defaultSelected = events
-            .filter((e) => e.defaultOn)
-            .map((e) => e.eventId)
-        setSelectedEventIds(defaultSelected)
-    }, [events])
-
-    // Validate configuration
+    // Validation
     useEffect(() => {
         if (!mapboxToken) {
             setConfigError('缺少 VITE_MAPBOX_TOKEN 環境變數，請檢查 .env 設定')
@@ -55,23 +55,23 @@ VITE_DATA_MODE=mixed`}
         )
     }
 
+    // Get latest event date for update date
+    const latestEvent = events.reduce((prev, curr) =>
+        curr.order > prev.order ? curr : prev
+    )
+    // Extract date from dateLabel (format: "2025/12/29-30" -> "2025/12/29")
+    const updateDate = latestEvent.dateLabel.split('-')[0].trim() || latestEvent.dateLabel
+
     return (
         <div className="app">
-            <header className="app-header">
-                <div className="header-content">
-                    <h1>軍演範圍互動地圖</h1>
-                    <p>台灣周邊歷次軍演區域範圍控制面板</p>
-                </div>
-                <div className="header-actions">
-                    <LanguageSwitcher
-                        currentLanguage={language}
-                        onLanguageChange={setLanguage}
-                    />
-                </div>
-            </header>
-
             <main className="app-main">
                 <div className="map-section">
+                    <div className="language-switcher-overlay">
+                        <LanguageSwitcher
+                            currentLanguage={language}
+                            onLanguageChange={setLanguage}
+                        />
+                    </div>
                     <MapView
                         events={events}
                         selectedEventIds={selectedEventIds}
@@ -87,9 +87,11 @@ VITE_DATA_MODE=mixed`}
                     />
                 </div>
             </main>
-
             <footer className="app-footer">
-                <p>© 2025 中央通訊社 Central News Agency</p>
+                <div className="footer-content">
+                    <img src={cnaLogo} alt="CNA" className="cna-logo" />
+                    <span className="update-date">更新日期：{updateDate}</span>
+                </div>
             </footer>
         </div>
     )

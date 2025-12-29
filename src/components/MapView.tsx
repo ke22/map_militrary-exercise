@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import { ExerciseEvent, DataMode } from '../types'
 import { useMapLayers } from '../hooks/useMapLayers'
@@ -32,6 +32,9 @@ export function MapView({
         let map: mapboxgl.Map | null = null
 
         try {
+            if (mapContainerRef.current) {
+                mapContainerRef.current.innerHTML = ''
+            }
             mapboxgl.accessToken = mapboxToken
 
             map = new mapboxgl.Map({
@@ -55,7 +58,7 @@ export function MapView({
             map.on('error', (e) => {
                 console.error('Mapbox error:', e)
                 // Only set error if it's a fatal initialization error
-                if (e.error?.message?.includes('token') || e.error?.status === 401) {
+                if (e.error?.message?.includes('token') || (e.error as any)?.status === 401) {
                     setError('Mapbox Token 無效或已過期')
                 }
             })
@@ -83,12 +86,24 @@ export function MapView({
             const layers = map.getStyle().layers
             if (!layers) return
 
-            const langSuffix = language === 'zh-Hant' ? 'zh-Hant' : language
+            // Mapbox language field mapping
+            const langFieldMap: Record<string, string> = {
+                'zh-Hant': 'name_zh-Hant',
+                'en': 'name_en',
+                'ja': 'name_ja'
+            }
+            
+            const langField = langFieldMap[language] || 'name'
 
             layers.forEach((layer) => {
                 if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
                     try {
-                        map.setLayoutProperty(layer.id, 'text-field', ['get', `name_${langSuffix}`] || ['get', 'name'])
+                        // Try the language-specific field first
+                        map.setLayoutProperty(layer.id, 'text-field', [
+                            'coalesce',
+                            ['get', langField],
+                            ['get', 'name']
+                        ])
                     } catch {
                         try {
                             map.setLayoutProperty(layer.id, 'text-field', ['get', 'name'])
@@ -101,6 +116,19 @@ export function MapView({
         }
 
         updateLang()
+        
+        // Also update when style data changes
+        const handleStyleData = () => {
+            if (map.isStyleLoaded()) {
+                updateLang()
+            }
+        }
+        
+        map.on('styledata', handleStyleData)
+        
+        return () => {
+            map.off('styledata', handleStyleData)
+        }
     }, [mapInstance, language])
 
     // 3. Use map layers hook
