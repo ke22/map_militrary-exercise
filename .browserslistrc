@@ -1,0 +1,16 @@
+# Browser support
+# 支援現代瀏覽器（ES2020+）
+> 0.5%
+last 2 versions
+Firefox ESR
+not dead
+not IE 11
+
+# 需要 WebGL 支援（Mapbox GL JS 要求）
+Chrome >= 80
+Firefox >= 80
+Safari >= 14
+Edge >= 80
+iOS Safari >= 14
+ChromeAndroid >= 80
+

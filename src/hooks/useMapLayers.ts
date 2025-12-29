@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react'
-import mapboxgl, { Map } from 'mapbox-gl'
+import type { Map } from 'mapbox-gl'
 import { ExerciseEvent, DataMode } from '../types'
 
 interface UseMapLayersProps {
@@ -157,17 +157,13 @@ export function useMapLayers({
         ])
 
         // 2. Exercise Source (GeoJSON)
-        if (dataMode === 'geojson' || dataMode === 'mixed') {
-            if (!map.getSource('exercises-geojson')) {
-                map.addSource('exercises-geojson', {
-                    type: 'geojson',
-                    data: './data/exercises.geojson',
-                })
-            }
-            // Force a retry of syncLayers if source was just added to ensure layers find it
-            // if (!map.getLayer(`exercises-fill-${events[0].eventId}`)) {
-            //     setTimeout(syncLayers, 0)
-            // }
+        // Always register GeoJSON source so that events without tileset (e.g. justice_2025)
+        // can still顯示 even when dataMode === 'tileset'
+        if (!map.getSource('exercises-geojson')) {
+            map.addSource('exercises-geojson', {
+                type: 'geojson',
+                data: './data/exercises.geojson',
+            })
         }
 
         // 3. Exercise Layers (Per Event)

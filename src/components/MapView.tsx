@@ -29,6 +29,12 @@ export function MapView({
     useEffect(() => {
         if (!mapContainerRef.current) return
 
+        // Check WebGL support before initializing map
+        if (!mapboxgl.supported()) {
+            setError('您的瀏覽器不支援 WebGL，請使用更新的瀏覽器（Chrome、Firefox、Safari、Edge）')
+            return
+        }
+
         let map: mapboxgl.Map | null = null
 
         try {
@@ -57,8 +63,12 @@ export function MapView({
 
             map.on('error', (e) => {
                 console.error('Mapbox error:', e)
+                // Check for WebGL support
+                if (e.error?.message?.includes('WebGL') || e.error?.message?.includes('webgl')) {
+                    setError('您的瀏覽器不支援 WebGL，請使用更新的瀏覽器（Chrome、Firefox、Safari、Edge）')
+                }
                 // Only set error if it's a fatal initialization error
-                if (e.error?.message?.includes('token') || (e.error as any)?.status === 401) {
+                else if (e.error?.message?.includes('token') || (e.error as any)?.status === 401) {
                     setError('Mapbox Token 無效或已過期')
                 }
             })

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>瀏覽器兼容性測試</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-item {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #007aff;
+        }
+        .pass { border-left-color: #34c759; }
+        .fail { border-left-color: #ff3b30; }
+        .warning { border-left-color: #ff9500; }
+        h1 { color: #fff; }
+        h2 { color: #007aff; margin-top: 30px; }
+        code { background: #000; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🌐 瀏覽器兼容性測試</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = [];
+        
+        function test(name, condition, required = true) {
+            const passed = condition();
+            results.push({ name, passed, required });
+            return passed;
+        }
+
+        function displayResults() {
+            const container = document.getElementById('results');
+            let html = '';
+
+            // Browser Info
+            html += '<h2>瀏覽器資訊</h2>';
+            html += `<div class="test-item">
+                <strong>User Agent:</strong> ${navigator.userAgent}<br>
+                <strong>平台:</strong> ${navigator.platform}<br>
+                <strong>語言:</strong> ${navigator.language}
+            </div>`;
+
+            // WebGL Test
+            html += '<h2>必要功能檢測</h2>';
+            
+            const webglSupported = test('WebGL 支援', () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    return !!(canvas.getContext('webgl') || canvas.getContext('webgl2'));
+                } catch (e) {
+                    return false;
+                }
+            }, true);
+
+            test('ES2020 語法支援', () => {
+                try {
+                    eval('const test = () => {}; class Test {}');
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }, true);
+
+            test('CSS Grid 支援', () => {
+                return CSS.supports('display', 'grid');
+            }, true);
+
+            test('CSS Flexbox 支援', () => {
+                return CSS.supports('display', 'flex');
+            }, true);
+
+            const backdropFilterSupported = test('CSS backdrop-filter 支援', () => {
+                return CSS.supports('backdrop-filter', 'blur(10px)') || 
+                       CSS.supports('-webkit-backdrop-filter', 'blur(10px)');
+            }, false);
+
+            // Display test results
+            html += '<h2>測試結果</h2>';
+            results.forEach(result => {
+                const className = result.passed ? 'pass' : (result.required ? 'fail' : 'warning');
+                const icon = result.passed ? '✅' : (result.required ? '❌' : '⚠️');
+                html += `<div class="test-item ${className}">
+                    ${icon} <strong>${result.name}</strong>: ${result.passed ? '通過' : (result.required ? '失敗（必要）' : '不支援（有降級處理）')}
+                </div>`;
+            });
+
+            // Summary
+            const passed = results.filter(r => r.passed).length;
+            const total = results.length;
+            const requiredPassed = results.filter(r => r.required && r.passed).length;
+            const requiredTotal = results.filter(r => r.required).length;
+
+            html += '<h2>總結</h2>';
+            html += `<div class="test-item ${requiredPassed === requiredTotal ? 'pass' : 'fail'}">
+                <strong>總體兼容性:</strong> ${passed}/${total} 項通過<br>
+                <strong>必要功能:</strong> ${requiredPassed}/${requiredTotal} 項通過<br>
+                ${requiredPassed === requiredTotal ? 
+                    '✅ <strong>您的瀏覽器完全支援此應用</strong>' : 
+                    '❌ <strong>您的瀏覽器不支援必要功能，請更新瀏覽器</strong>'}
+            </div>`;
+
+            // Recommendations
+            html += '<h2>建議</h2>';
+            if (!webglSupported) {
+                html += '<div class="test-item fail">❌ <strong>WebGL 不支援</strong><br>地圖功能無法使用，請更新到支援 WebGL 的瀏覽器版本</div>';
+            }
+            if (!backdropFilterSupported) {
+                html += '<div class="test-item warning">⚠️ <strong>backdrop-filter 不支援</strong><br>毛玻璃效果會降級為半透明背景，不影響功能</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Run tests
+        displayResults();
+    </script>
+</body>
+</html>
+
