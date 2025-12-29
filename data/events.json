@@ -1,0 +1,57 @@
+[
+    {
+        "eventId": "pelosi_2022",
+        "title": "2022 裴洛西訪台軍演",
+        "dateLabel": "2022/8/4-8/7",
+        "defaultOn": true,
+        "order": 1,
+        "color": "#ff4466",
+        "sourceLabel": "中國人民解放軍東部戰區公告",
+        "tilesetId": null,
+        "sourceLayer": null
+    },
+    {
+        "eventId": "js_2024a",
+        "title": "聯合利劍-2024A",
+        "dateLabel": "2024/10/14",
+        "defaultOn": true,
+        "order": 2,
+        "color": "#00d4ff",
+        "sourceLabel": "中國人民解放軍東部戰區公告",
+        "tilesetId": "cnagraphicdesign.6xygjfep",
+        "sourceLayer": "JS_2024A-53wazd"
+    },
+    {
+        "eventId": "js_2024b",
+        "title": "聯合利劍-2024B",
+        "dateLabel": "2024/10/14",
+        "defaultOn": true,
+        "order": 3,
+        "color": "#00ff88",
+        "sourceLabel": "中國人民解放軍東部戰區公告",
+        "tilesetId": "cnagraphicdesign.8vtef00q",
+        "sourceLayer": "6_polygon-1y4518"
+    },
+    {
+        "eventId": "airspace_2024",
+        "title": "空域保留區",
+        "dateLabel": "2024/12/10",
+        "defaultOn": true,
+        "order": 4,
+        "color": "#ff8844",
+        "sourceLabel": "中國人民解放軍東部戰區公告",
+        "tilesetId": "cnagraphicdesign.cj2l2648",
+        "sourceLayer": "20241210_7-455tfl"
+    },
+    {
+        "eventId": "justice_2025",
+        "title": "正義使命-2025",
+        "dateLabel": "2025/12/29-30",
+        "defaultOn": true,
+        "order": 5,
+        "color": "#aa66ff",
+        "sourceLabel": "中國人民解放軍東部戰區公告",
+        "tilesetId": null,
+        "sourceLayer": null
+    }
+]

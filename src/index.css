@@ -1,0 +1,66 @@
+:root {
+    /* Dark Theme Colors */
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #12121a;
+    --bg-tertiary: #1a1a25;
+    --bg-panel: rgba(18, 18, 26, 0.95);
+
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0b0;
+    --text-muted: #606070;
+
+    --border-color: rgba(255, 255, 255, 0.1);
+    --border-accent: rgba(100, 200, 255, 0.3);
+
+    --accent-cyan: #00d4ff;
+    --accent-blue: #4a9eff;
+    --accent-green: #00ff88;
+    --accent-red: #ff4466;
+    --accent-orange: #ff8844;
+    --accent-purple: #aa66ff;
+
+    /* Fonts */
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background: var(--bg-primary);
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+button {
+    font-family: inherit;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Utility classes for HUD glow effects */
+.glow-cyan {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+.glow-text {
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
