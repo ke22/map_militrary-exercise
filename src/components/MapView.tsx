@@ -164,7 +164,10 @@ export function MapView({
     // 4. Add Japan label marker
     useEffect(() => {
         const map = mapInstance
-        if (!map) return
+        if (!map) {
+            console.log('⚠️ Map instance not ready for Japan marker')
+            return
+        }
         
         // 创建带样式的标记元素
         const createLabelElement = (text: string) => {
@@ -207,45 +210,83 @@ export function MapView({
 
         // 等待地图完全加载后添加标记
         const addMarker = () => {
+            console.log('🔄 Attempting to add Japan marker, map.isStyleLoaded():', map.isStyleLoaded())
+            
             if (!map.isStyleLoaded()) {
-                map.once('load', addMarker)
+                console.log('⏳ Map style not loaded, waiting for load event...')
+                map.once('load', () => {
+                    console.log('✅ Map load event fired, adding marker...')
+                    setTimeout(addMarker, 100) // 小延迟确保样式完全加载
+                })
                 return
             }
             
             // 如果标记已存在，先移除
             if (japanMarkerRef.current) {
+                console.log('🗑️ Removing existing Japan marker')
                 japanMarkerRef.current.remove()
                 japanMarkerRef.current = null
             }
 
-            // 创建标记
-            const marker = new mapboxgl.Marker({
-                element: createLabelElement(getLabelText()),
-                anchor: 'center'
-            })
-                .setLngLat([123.7835716901955, 24.345665031336857]) // [经度, 纬度]
-                .addTo(map)
+            try {
+                // 创建标记
+                const labelText = getLabelText()
+                const markerElement = createLabelElement(labelText)
+                const marker = new mapboxgl.Marker({
+                    element: markerElement,
+                    anchor: 'center'
+                })
+                    .setLngLat([123.7835716901955, 24.345665031336857]) // [经度, 纬度]
+                    .addTo(map)
 
-            japanMarkerRef.current = marker
-            console.log('✅ Japan marker added at:', [123.7835716901955, 24.345665031336857])
+                japanMarkerRef.current = marker
+                
+                // 验证标记是否成功添加
+                const markerEl = marker.getElement()
+                if (markerEl && markerEl.parentElement) {
+                    console.log('✅ Japan marker added successfully at:', [123.7835716901955, 24.345665031336857])
+                    console.log('📍 Marker element:', markerEl)
+                    console.log('📍 Marker parent:', markerEl.parentElement)
+                } else {
+                    console.error('❌ Japan marker element not found in DOM')
+                }
+            } catch (error) {
+                console.error('❌ Error adding Japan marker:', error)
+            }
         }
         
         // 语言切换时更新文本
         const updateMarkerText = () => {
-            if (japanMarkerRef.current && japanMarkerRef.current.getElement()) {
+            if (japanMarkerRef.current) {
                 const el = japanMarkerRef.current.getElement()
                 if (el) {
                     el.textContent = getLabelText()
+                    console.log('🔄 Updated Japan marker text to:', getLabelText())
                 }
             }
         }
         
-        // 如果地图已加载，立即添加标记
-        if (map.isStyleLoaded()) {
-            addMarker()
-        } else {
-            map.once('load', addMarker)
+        // 使用多种方式确保地图加载完成
+        const tryAddMarker = () => {
+            if (map.isStyleLoaded()) {
+                // 地图样式已加载，延迟一点确保完全准备好
+                setTimeout(addMarker, 100)
+            } else {
+                // 如果地图还没加载，监听多个事件
+                const onLoad = () => {
+                    setTimeout(() => {
+                        if (map.isStyleLoaded()) {
+                            addMarker()
+                        }
+                    }, 200)
+                }
+                map.once('load', onLoad)
+                map.once('styledata', onLoad)
+            }
         }
+        
+        // 立即尝试添加
+        tryAddMarker()
         
         // 语言切换时更新文本
         updateMarkerText()
@@ -254,9 +295,6 @@ export function MapView({
             if (japanMarkerRef.current) {
                 japanMarkerRef.current.remove()
                 japanMarkerRef.current = null
-            }
-            if (map) {
-                map.off('load', addMarker)
             }
         }
     }, [mapInstance, language])
