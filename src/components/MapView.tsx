@@ -164,8 +164,8 @@ export function MapView({
     // 4. Add Japan label marker
     useEffect(() => {
         const map = mapInstance
-        if (!map || !map.isStyleLoaded()) return
-
+        if (!map) return
+        
         // 创建带样式的标记元素
         const createLabelElement = (text: string) => {
             const el = document.createElement('div')
@@ -205,16 +205,31 @@ export function MapView({
             }
         }
 
-        // 创建标记
-        const marker = new mapboxgl.Marker({
-            element: createLabelElement(getLabelText()),
-            anchor: 'center'
-        })
-            .setLngLat([123.7835716901955, 24.345665031336857]) // [经度, 纬度]
-            .addTo(map)
+        // 等待地图完全加载后添加标记
+        const addMarker = () => {
+            if (!map.isStyleLoaded()) {
+                map.once('load', addMarker)
+                return
+            }
+            
+            // 如果标记已存在，先移除
+            if (japanMarkerRef.current) {
+                japanMarkerRef.current.remove()
+                japanMarkerRef.current = null
+            }
 
-        japanMarkerRef.current = marker
+            // 创建标记
+            const marker = new mapboxgl.Marker({
+                element: createLabelElement(getLabelText()),
+                anchor: 'center'
+            })
+                .setLngLat([123.7835716901955, 24.345665031336857]) // [经度, 纬度]
+                .addTo(map)
 
+            japanMarkerRef.current = marker
+            console.log('✅ Japan marker added at:', [123.7835716901955, 24.345665031336857])
+        }
+        
         // 语言切换时更新文本
         const updateMarkerText = () => {
             if (japanMarkerRef.current && japanMarkerRef.current.getElement()) {
@@ -224,13 +239,24 @@ export function MapView({
                 }
             }
         }
-
+        
+        // 如果地图已加载，立即添加标记
+        if (map.isStyleLoaded()) {
+            addMarker()
+        } else {
+            map.once('load', addMarker)
+        }
+        
+        // 语言切换时更新文本
         updateMarkerText()
 
         return () => {
             if (japanMarkerRef.current) {
                 japanMarkerRef.current.remove()
                 japanMarkerRef.current = null
+            }
+            if (map) {
+                map.off('load', addMarker)
             }
         }
     }, [mapInstance, language])

@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react'
 import type { Map } from 'mapbox-gl'
+import type { FeatureCollection } from 'geojson'
 import { ExerciseEvent, DataMode } from '../types'
 
 interface UseMapLayersProps {
@@ -300,37 +301,12 @@ export function useMapLayers({
                     map.addSource(sid, { type: 'vector', url: `mapbox://${event.tilesetId}` })
                 }
 
-            if (!map.getLayer(fillId)) {
-                map.addLayer({
-                    id: fillId,
-                    type: 'fill',
-                    source: sid,
-                    'source-layer': event.sourceLayer!,
-                    layout: {
-                        visibility: visibility
-                    },
-                    paint: { 'fill-color': event.color, 'fill-opacity': 0.35 }
-                })
-            }
-            if (!map.getLayer(lineId)) {
-                map.addLayer({
-                    id: lineId,
-                    type: 'line',
-                    source: sid,
-                    'source-layer': event.sourceLayer!,
-                    layout: {
-                        visibility: visibility
-                    },
-                    paint: { 'line-color': event.color, 'line-width': 2 }
-                })
-            }
-            } else {
                 if (!map.getLayer(fillId)) {
                     map.addLayer({
                         id: fillId,
                         type: 'fill',
-                        source: 'exercises-geojson',
-                        filter: ['==', ['get', 'eventId'], event.eventId],
+                        source: sid,
+                        'source-layer': event.sourceLayer!,
                         layout: {
                             visibility: visibility
                         },
@@ -341,8 +317,74 @@ export function useMapLayers({
                     map.addLayer({
                         id: lineId,
                         type: 'line',
-                        source: 'exercises-geojson',
-                        filter: ['==', ['get', 'eventId'], event.eventId],
+                        source: sid,
+                        'source-layer': event.sourceLayer!,
+                        layout: {
+                            visibility: visibility
+                        },
+                        paint: { 'line-color': event.color, 'line-width': 2 }
+                    })
+                }
+            } else {
+                // 支援 events.json 中的 coordinates.geojson（例如正義使命-2025）
+                const anyEvent = event as any
+                const coordinatesGeojson = anyEvent.coordinates?.geojson
+
+                let sourceId: string = 'exercises-geojson'
+                const useCustomSource = !!coordinatesGeojson
+
+                if (useCustomSource) {
+                    sourceId = `exercises-geojson-${event.eventId}`
+                    if (!map.getSource(sourceId)) {
+                        try {
+                            // 如果 geojson 是单个 Feature，转换为 FeatureCollection
+                            let geojsonData: FeatureCollection
+                            if (coordinatesGeojson.type === 'Feature') {
+                                geojsonData = {
+                                    type: 'FeatureCollection',
+                                    features: [coordinatesGeojson]
+                                }
+                            } else if (coordinatesGeojson.type === 'FeatureCollection') {
+                                geojsonData = coordinatesGeojson
+                            } else {
+                                console.warn(`Invalid GeoJSON type for event ${event.eventId}:`, coordinatesGeojson.type)
+                                return // 跳过这个事件的后续处理
+                            }
+                            
+                            map.addSource(sourceId, {
+                                type: 'geojson',
+                                data: geojsonData,
+                            })
+                            console.log(`✅ Added GeoJSON source for ${event.eventId}`)
+                        } catch (err) {
+                            console.error(`Failed to add GeoJSON source for ${event.eventId}:`, err)
+                            return // 跳过这个事件的后续处理
+                        }
+                    }
+                }
+
+                if (!map.getLayer(fillId)) {
+                    map.addLayer({
+                        id: fillId,
+                        type: 'fill',
+                        source: sourceId,
+                        ...(useCustomSource
+                            ? {}
+                            : { filter: ['==', ['get', 'eventId'], event.eventId] }),
+                        layout: {
+                            visibility: visibility
+                        },
+                        paint: { 'fill-color': event.color, 'fill-opacity': 0.35 }
+                    })
+                }
+                if (!map.getLayer(lineId)) {
+                    map.addLayer({
+                        id: lineId,
+                        type: 'line',
+                        source: sourceId,
+                        ...(useCustomSource
+                            ? {}
+                            : { filter: ['==', ['get', 'eventId'], event.eventId] }),
                         layout: {
                             visibility: visibility
                         },
