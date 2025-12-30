@@ -11,6 +11,6 @@ Chrome >= 80
 Firefox >= 80
 Safari >= 14
 Edge >= 80
-iOS Safari >= 14
-ChromeAndroid >= 80
+ios_saf >= 14
+and_chr >= 80
 
