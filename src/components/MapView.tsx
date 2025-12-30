@@ -25,6 +25,7 @@ export function MapView({
     const mapRef = useRef<mapboxgl.Map | null>(null)
     const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null)
     const [error, setError] = useState<string | null>(null)
+    const japanMarkerRef = useRef<mapboxgl.Marker | null>(null)
 
     // 1. Initialize Map
     useEffect(() => {
@@ -159,6 +160,80 @@ export function MapView({
         events,
         dataMode,
     })
+
+    // 4. Add Japan label marker
+    useEffect(() => {
+        const map = mapInstance
+        if (!map || !map.isStyleLoaded()) return
+
+        // 创建带样式的标记元素
+        const createLabelElement = (text: string) => {
+            const el = document.createElement('div')
+            el.className = 'japan-label-marker'
+            el.textContent = text
+            
+            // 应用样式
+            Object.assign(el.style, {
+                background: 'rgba(28, 28, 30, 0.95)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                color: '#ffffff',
+                padding: '8px 14px',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontWeight: '600',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                letterSpacing: '0.3px',
+                zIndex: '1000',
+                transition: 'all 0.3s ease'
+            })
+            
+            return el
+        }
+
+        // 根据语言获取文本
+        const getLabelText = () => {
+            switch (language) {
+                case 'ja': return '日本'
+                case 'en': return 'Japan'
+                case 'zh-Hant': return '日本'
+                default: return '日本'
+            }
+        }
+
+        // 创建标记
+        const marker = new mapboxgl.Marker({
+            element: createLabelElement(getLabelText()),
+            anchor: 'center'
+        })
+            .setLngLat([123.7835716901955, 24.345665031336857]) // [经度, 纬度]
+            .addTo(map)
+
+        japanMarkerRef.current = marker
+
+        // 语言切换时更新文本
+        const updateMarkerText = () => {
+            if (japanMarkerRef.current && japanMarkerRef.current.getElement()) {
+                const el = japanMarkerRef.current.getElement()
+                if (el) {
+                    el.textContent = getLabelText()
+                }
+            }
+        }
+
+        updateMarkerText()
+
+        return () => {
+            if (japanMarkerRef.current) {
+                japanMarkerRef.current.remove()
+                japanMarkerRef.current = null
+            }
+        }
+    }, [mapInstance, language])
 
     if (error) {
         return (
