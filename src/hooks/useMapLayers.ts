@@ -88,7 +88,7 @@ export function useMapLayers({
                             paint: {
                                 'line-color': '#ffffff',
                                 'line-width': width,
-                                'line-dasharray': dash,
+                                ...(dash.length > 0 && { 'line-dasharray': dash }),
                                 'line-opacity': opacity,
                             },
                         })
@@ -135,26 +135,127 @@ export function useMapLayers({
             }
         }
 
-        addRefLayer('ref-adiz-line', 'mapbox://cnagraphicdesign.6aqd2wlm', 'Taiwans_ADIZ-3uff2b', [4, 2], 1, 0.7)
-        addRefLayer('ref-median-line', 'mapbox://cnagraphicdesign.2ktysf7p', 'true', [8, 4], 1, 0.8)
+        addRefLayer('ref-adiz-line', 'mapbox://cnagraphicdesign.6aqd2wlm', 'Taiwans_ADIZ-3uff2b', [4, 2], 0.8, 0.6)
+        addRefLayer('ref-median-line', 'mapbox://cnagraphicdesign.2ktysf7p', 'true', [8, 4], 0.8, 0.6)
         
-        // Maritime boundaries - Taiwan Territorial Baselines and Territorial Sea
+        // Maritime boundaries - Territorial Sea
         // Tileset: cnagraphicdesign.bahwakzv
         // Source layer: cartodb-query_1-90kmsi (note: underscore, not hyphen)
         // Field name: name (lowercase)
-        // Filter for Taiwan Territorial Baselines (1999)
-        addRefLayer('ref-territorial-baselines', 'mapbox://cnagraphicdesign.bahwakzv', 'cartodb-query_1-90kmsi', [], 1, 0.9, [
-            '==', 
-            ['get', 'name'], 
-            'Taiwan Territorial Baselines (1999)'
-        ])
+        // Note: Territorial Baselines are no longer needed since contiguous zone is loaded from GeoJSON
         
-        // Filter for Taiwan Territorial Sea
-        addRefLayer('ref-territorial-sea', 'mapbox://cnagraphicdesign.bahwakzv', 'cartodb-query_1-90kmsi', [], 1, 0.9, [
-            '==', 
-            ['get', 'name'], 
-            'Taiwan Territorial Sea'
-        ])
+        // Filter for Taiwan Territorial Sea - warning color (red)
+        // We need to add the layer manually to set custom color
+        const territorialSeaSourceId = 'source-ref-territorial-sea'
+        if (!map.getSource(territorialSeaSourceId)) {
+            map.addSource(territorialSeaSourceId, { 
+                type: 'vector', 
+                url: 'mapbox://cnagraphicdesign.bahwakzv' 
+            })
+        }
+        
+        // Add territorial sea layer with warning color (red)
+        if (!map.getLayer('ref-territorial-sea')) {
+            try {
+                map.addLayer({
+                    id: 'ref-territorial-sea',
+                    type: 'line',
+                    source: territorialSeaSourceId,
+                    'source-layer': 'cartodb-query_1-90kmsi',
+                    filter: ['==', ['get', 'name'], 'Taiwan Territorial Sea'],
+                    layout: {
+                        visibility: 'visible'
+                    },
+                    paint: {
+                        'line-color': '#ff4444', // Warning color (red)
+                        'line-width': 1.2,
+                        'line-opacity': 0.8
+                    }
+                })
+            } catch (e) {
+                // If layer add fails (source not ready), wait for source to load
+                const sourceLoadHandler = () => {
+                    try {
+                        if (!map.getLayer('ref-territorial-sea')) {
+                            map.addLayer({
+                                id: 'ref-territorial-sea',
+                                type: 'line',
+                                source: territorialSeaSourceId,
+                                'source-layer': 'cartodb-query_1-90kmsi',
+                                filter: ['==', ['get', 'name'], 'Taiwan Territorial Sea'],
+                                layout: {
+                                    visibility: 'visible'
+                                },
+                                paint: {
+                                    'line-color': '#ff4444', // Warning color (red)
+                                    'line-width': 1.2,
+                                    'line-opacity': 0.8
+                                }
+                            })
+                        }
+                        map.off('sourcedata', sourceLoadHandler)
+                    } catch (err) {
+                        // Source still not ready, keep waiting
+                    }
+                }
+                map.on('sourcedata', sourceLoadHandler)
+            }
+        } else {
+            // Ensure visibility and color are set correctly if layer already exists
+            try {
+                map.setLayoutProperty('ref-territorial-sea', 'visibility', 'visible')
+                map.setPaintProperty('ref-territorial-sea', 'line-color', '#ff4444')
+            } catch (e) {
+                // Layer might not be ready yet
+            }
+        }
+        
+        // Contiguous Zone - load from GeoJSON file (not calculated from baselines)
+        const setupContiguousZone = () => {
+            try {
+                // Load contiguous zone from GeoJSON file
+                if (!map.getSource('contiguous-zone-geojson')) {
+                    map.addSource('contiguous-zone-geojson', {
+                        type: 'geojson',
+                        data: './data/contiguous_zone.geojson'
+                    })
+                }
+                
+                // Add fill layer (subtle fill to show area)
+                if (!map.getLayer('ref-contiguous-zone-fill')) {
+                    map.addLayer({
+                        id: 'ref-contiguous-zone-fill',
+                        type: 'fill',
+                        source: 'contiguous-zone-geojson',
+                        layout: { visibility: 'visible' },
+                        paint: {
+                            'fill-color': 'rgba(255, 255, 255, 0.05)',
+                            'fill-opacity': 0.05
+                        }
+                    }, 'ref-territorial-sea') // Insert before territorial sea layer
+                }
+                
+                // Add line layer (solid line for boundary - thinnest, semi-transparent)
+                if (!map.getLayer('ref-contiguous-zone-line')) {
+                    map.addLayer({
+                        id: 'ref-contiguous-zone-line',
+                        type: 'line',
+                        source: 'contiguous-zone-geojson',
+                        layout: { visibility: 'visible' },
+                        paint: {
+                            'line-color': '#ffffff',
+                            'line-width': 0.8,
+                            'line-opacity': 0.6
+                        }
+                    }, 'ref-territorial-sea') // Insert before territorial sea layer
+                }
+            } catch (err) {
+                console.warn('Failed to load contiguous zone:', err)
+            }
+        }
+        
+        // Setup contiguous zone calculation
+        setupContiguousZone()
 
         // 2. Exercise Source (GeoJSON)
         // Always register GeoJSON source so that events without tileset (e.g. justice_2025)

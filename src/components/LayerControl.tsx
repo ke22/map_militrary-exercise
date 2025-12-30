@@ -74,12 +74,12 @@ export function LayerControl({
                         <span>海峽中線</span>
                     </div>
                     <div className="ref-item">
-                        <span className="ref-line territorial-baselines" />
-                        <span>領海基線</span>
-                    </div>
-                    <div className="ref-item">
                         <span className="ref-line territorial-sea" />
                         <span>領海</span>
+                    </div>
+                    <div className="ref-item">
+                        <span className="ref-line contiguous-zone" />
+                        <span>鄰接區</span>
                     </div>
                 </div>
             </div>

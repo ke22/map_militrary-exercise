@@ -197,32 +197,42 @@
     gap: 12px;
     font-size: 13px;
     color: var(--text-secondary);
+    min-height: 20px;
+}
+
+.ref-item .ref-line {
+    align-self: center;
 }
 
 .ref-line {
-    width: 24px;
+    width: 32px;
     height: 0;
-    border-top-width: 2px;
+    flex-shrink: 0;
+    display: inline-block;
 }
 
 .ref-line.adiz {
-    border-top: 2px dashed rgba(255, 255, 255, 0.8);
+    border-top: 0.8px dashed rgba(255, 255, 255, 0.6);
+    /* Map: dash [4, 2], width 0.8, opacity 0.6 */
 }
 
 .ref-line.median {
-    border-top: 3px dashed white;
+    border-top: 0.8px dashed rgba(255, 255, 255, 0.6);
+    /* Map: dash [8, 4], width 0.8, opacity 0.6 */
 }
 
 .ref-line.maritime {
     border-top: 2px solid rgba(255, 255, 255, 0.9);
 }
 
-.ref-line.territorial-baselines {
-    border-top: 1.5px solid rgba(255, 255, 255, 0.9);
+.ref-line.territorial-sea {
+    border-top: 1.2px solid rgba(255, 68, 68, 0.8);
+    /* Map: width 1.2, opacity 0.8, color #ff4444 */
 }
 
-.ref-line.territorial-sea {
-    border-top: 1.5px solid rgba(255, 255, 255, 0.9);
+.ref-line.contiguous-zone {
+    border-top: 0.8px solid rgba(255, 255, 255, 0.6);
+    /* Map: width 0.8, opacity 0.6, color #ffffff */
 }
 
 /* Footer */

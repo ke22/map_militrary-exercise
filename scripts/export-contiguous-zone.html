@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>導出鄰接區 GeoJSON</title>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.css" rel="stylesheet">
+    <script src="https://unpkg.com/@turf/turf@7/turf.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .container {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        button {
+            background: #4264fb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #3352d9;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            min-height: 50px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>鄰接區 GeoJSON 計算與導出工具</h1>
+        
+        <label for="mapboxToken">Mapbox Access Token:</label>
+        <input type="text" id="mapboxToken" placeholder="pk.eyJ1Ijo..." />
+        
+        <button onclick="initializeMap()">初始化地圖</button>
+        <button onclick="calculateAndExport()" id="calcBtn" disabled>計算並導出鄰接區</button>
+        
+        <div id="status"></div>
+    </div>
+
+    <div id="map" style="width: 100%; height: 400px; margin-top: 20px;"></div>
+
+    <script>
+        let map;
+        let mapboxToken = '';
+        
+        function log(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.className = type;
+            status.innerHTML = message;
+            console.log(message);
+        }
+        
+        function initializeMap() {
+            mapboxToken = document.getElementById('mapboxToken').value.trim();
+            if (!mapboxToken) {
+                log('請輸入 Mapbox Token', 'error');
+                return;
+            }
+            
+            mapboxgl.accessToken = mapboxToken;
+            
+            map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/dark-v11',
+                center: [121.0, 24.0],
+                zoom: 7
+            });
+            
+            map.on('load', () => {
+                log('✅ 地圖載入成功', 'success');
+                document.getElementById('calcBtn').disabled = false;
+                
+                // 添加基線和領海的 source
+                setupSources();
+            });
+        }
+        
+        function setupSources() {
+            const baselinesSourceId = 'source-ref-territorial-baselines';
+            const territorialSeaSourceId = 'source-ref-territorial-sea';
+            
+            // 添加基線 source
+            if (!map.getSource(baselinesSourceId)) {
+                map.addSource(baselinesSourceId, {
+                    type: 'vector',
+                    url: 'mapbox://cnagraphicdesign.bahwakzv'
+                });
+            }
+            
+            // 添加領海 source
+            if (!map.getSource(territorialSeaSourceId)) {
+                map.addSource(territorialSeaSourceId, {
+                    type: 'vector',
+                    url: 'mapbox://cnagraphicdesign.bahwakzv'
+                });
+            }
+            
+            // 設置地圖視圖以確保覆蓋台灣區域（觸發 tile 載入）
+            map.fitBounds([
+                [119.0, 21.5], // 西南角
+                [122.5, 26.0]  // 東北角
+            ], {
+                padding: 50,
+                duration: 1000
+            });
+            
+            // 添加基線圖層（可見，用於觸發 tile 載入）
+            if (!map.getLayer('ref-territorial-baselines')) {
+                map.addLayer({
+                    id: 'ref-territorial-baselines',
+                    type: 'line',
+                    source: baselinesSourceId,
+                    'source-layer': 'cartodb-query_1-90kmsi',
+                    filter: ['==', ['get', 'name'], 'Taiwan Territorial Baselines (1999)'],
+                    layout: { visibility: 'visible' },
+                    paint: {
+                        'line-color': '#ffffff',
+                        'line-width': 1.5,
+                        'line-opacity': 0.3
+                    }
+                });
+            }
+            
+            // 添加領海圖層（可見，用於觸發 tile 載入）
+            if (!map.getLayer('ref-territorial-sea')) {
+                map.addLayer({
+                    id: 'ref-territorial-sea',
+                    type: 'line',
+                    source: territorialSeaSourceId,
+                    'source-layer': 'cartodb-query_1-90kmsi',
+                    filter: ['==', ['get', 'name'], 'Taiwan Territorial Sea'],
+                    layout: { visibility: 'visible' },
+                    paint: {
+                        'line-color': '#ff4444',
+                        'line-width': 1.2,
+                        'line-opacity': 0.3
+                    }
+                });
+            }
+            
+            log('📖 Source 和圖層已設置，地圖正在調整視圖以載入 tiles...', 'info');
+        }
+        
+        async function calculateAndExport() {
+            if (!map) {
+                log('請先初始化地圖', 'error');
+                return;
+            }
+            
+            log('🔄 開始計算鄰接區...', 'info');
+            
+            try {
+                // 等待地圖載入完成
+                await new Promise(resolve => {
+                    if (map.loaded()) {
+                        resolve();
+                    } else {
+                        map.once('load', resolve);
+                    }
+                });
+                
+                // 等待地圖視圖調整完成
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // 等待 source tiles 載入 - 使用事件監聽
+                log('⏳ 等待 tiles 載入中...', 'info');
+                await new Promise(resolve => {
+                    let tilesLoaded = 0;
+                    const checkTiles = () => {
+                        tilesLoaded++;
+                        if (tilesLoaded >= 5) { // 等待至少 5 個 tile 載入事件
+                            resolve();
+                        }
+                    };
+                    map.on('sourcedata', (e) => {
+                        if (e.isSourceLoaded && 
+                            (e.sourceId === 'source-ref-territorial-baselines' || 
+                             e.sourceId === 'source-ref-territorial-sea')) {
+                            checkTiles();
+                        }
+                    });
+                    // 超時保護
+                    setTimeout(resolve, 10000);
+                });
+                
+                // 額外等待確保 tiles 完全載入
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                // 查詢基線特徵 - 嘗試多次以確保載入 tiles
+                let baselineFeatures = map.querySourceFeatures('source-ref-territorial-baselines', {
+                    sourceLayer: 'cartodb-query_1-90kmsi',
+                    filter: ['==', ['get', 'name'], 'Taiwan Territorial Baselines (1999)']
+                });
+                
+                log(`📊 初次查詢：找到 ${baselineFeatures.length} 個基線特徵`, 'info');
+                
+                if (baselineFeatures.length === 0) {
+                    log('⚠️ 未找到基線數據，嘗試調整地圖視圖後重試...', 'error');
+                    log('💡 正在嘗試縮放地圖以載入更多 tiles...', 'info');
+                    
+                    // 嘗試不同的縮放級別
+                    map.zoomTo(8, { duration: 1000 });
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    
+                    baselineFeatures = map.querySourceFeatures('source-ref-territorial-baselines', {
+                        sourceLayer: 'cartodb-query_1-90kmsi',
+                        filter: ['==', ['get', 'name'], 'Taiwan Territorial Baselines (1999)']
+                    });
+                    
+                    log(`📊 縮放級別 8：找到 ${baselineFeatures.length} 個基線特徵`, 'info');
+                    
+                    if (baselineFeatures.length === 0) {
+                        map.zoomTo(7, { duration: 1000 });
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        
+                        baselineFeatures = map.querySourceFeatures('source-ref-territorial-baselines', {
+                            sourceLayer: 'cartodb-query_1-90kmsi',
+                            filter: ['==', ['get', 'name'], 'Taiwan Territorial Baselines (1999)']
+                        });
+                        
+                        log(`📊 縮放級別 7：找到 ${baselineFeatures.length} 個基線特徵`, 'info');
+                        
+                        if (baselineFeatures.length === 0) {
+                            log('❌ 多次嘗試後仍未找到基線數據。', 'error');
+                            log('💡 請檢查：1) Token 是否有效 2) 網絡連接 3) 在地圖上手動縮放/平移後重試', 'info');
+                            log('💡 建議：在地圖上放大到 level 8-9 並平移，然後再次點擊「計算並導出鄰接區」', 'info');
+                            return;
+                        } else {
+                            log(`✅ 在縮放級別 7 找到 ${baselineFeatures.length} 個基線特徵，繼續計算...`, 'success');
+                        }
+                    } else {
+                        log(`✅ 在縮放級別 8 找到 ${baselineFeatures.length} 個基線特徵，繼續計算...`, 'success');
+                    }
+                } else {
+                    log(`✅ 找到 ${baselineFeatures.length} 個基線特徵，繼續計算...`, 'success');
+                }
+                
+                // 查詢領海特徵
+                const territorialSeaFeatures = map.querySourceFeatures('source-ref-territorial-sea', {
+                    sourceLayer: 'cartodb-query_1-90kmsi',
+                    filter: ['==', ['get', 'name'], 'Taiwan Territorial Sea']
+                });
+                
+                log(`📊 找到 ${territorialSeaFeatures.length} 個領海特徵（將使用完整 24 海里緩衝區，不減去領海）`, 'info');
+                
+                // 計算 24 海里緩衝區
+                const buffered24nm = [];
+                baselineFeatures.forEach(feature => {
+                    if (feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString') {
+                        const buffered = turf.buffer(
+                            turf.feature(feature.geometry),
+                            44.448, // 24 海里 = 44.448 公里
+                            { units: 'kilometers' }
+                        );
+                        if (buffered && (buffered.geometry.type === 'Polygon' || buffered.geometry.type === 'MultiPolygon')) {
+                            buffered24nm.push(buffered);
+                        }
+                    }
+                });
+                
+                if (buffered24nm.length === 0) {
+                    log('❌ 緩衝區計算失敗', 'error');
+                    return;
+                }
+                
+                // 合併所有緩衝區
+                let contiguous24nm;
+                if (buffered24nm.length === 1) {
+                    contiguous24nm = buffered24nm[0];
+                } else {
+                    const fc = turf.featureCollection(buffered24nm);
+                    const dissolved = turf.dissolve(fc);
+                    contiguous24nm = dissolved.features[0];
+                }
+                
+                // 使用完整的 24 海里緩衝區（包含領海和陸地，不減去領海部分）
+                let result = contiguous24nm;
+                // 注意：不再減去領海部分，直接使用完整的 24 海里緩衝區
+                // 這樣可以顯示鄰接區的最大範圍（包含領海和可能延伸到的陸地）
+                
+                // 創建 GeoJSON
+                const geojson = turf.featureCollection([result]);
+                geojson.features[0].properties = {
+                    name: '鄰接區 (Contiguous Zone)',
+                    description: '自領海基線向外 24 海浬（完整範圍，含領海及陸地）'
+                };
+                
+                // 下載文件
+                const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'contiguous_zone.geojson';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                log('✅ 鄰接區 GeoJSON 計算完成並已下載！', 'success');
+                log(`📦 Feature 類型: ${result.geometry.type}`, 'info');
+                
+            } catch (error) {
+                log(`❌ 計算失敗: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+        
+        // 從 localStorage 或 URL 參數讀取 token
+        window.onload = () => {
+            // 優先從 URL 參數讀取
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlToken = urlParams.get('token');
+            
+            // 其次從 localStorage 讀取
+            const savedToken = localStorage.getItem('mapboxToken');
+            
+            const tokenInput = document.getElementById('mapboxToken');
+            if (urlToken) {
+                tokenInput.value = urlToken;
+            } else if (savedToken) {
+                tokenInput.value = savedToken;
+            }
+            
+            tokenInput.addEventListener('change', (e) => {
+                localStorage.setItem('mapboxToken', e.target.value);
+            });
+            
+            // 如果有 token，自動初始化
+            if (tokenInput.value) {
+                setTimeout(() => {
+                    initializeMap();
+                }, 500);
+            }
+        };
+    </script>
+</body>
+</html>
+
