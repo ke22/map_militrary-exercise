@@ -9,6 +9,21 @@ interface UseMapLayersProps {
     dataMode: DataMode
 }
 
+// Helper function to safely get BASE_URL as a relative path
+function getBaseUrl(): string {
+    let baseUrl = import.meta.env.BASE_URL || '/'
+    // 如果包含 http:// 或 https://，说明配置错误，使用根路径
+    if (baseUrl.includes('http://') || baseUrl.includes('https://')) {
+        console.warn('BASE_URL 配置错误，包含完整URL，使用根路径代替:', baseUrl)
+        baseUrl = '/'
+    }
+    // 确保以 / 开头且以 / 结尾（除非是根路径）
+    if (baseUrl !== '/' && !baseUrl.endsWith('/')) {
+        baseUrl += '/'
+    }
+    return baseUrl
+}
+
 export function useMapLayers({
     map,
     selectedEventIds,
@@ -215,9 +230,10 @@ export function useMapLayers({
             try {
                 // Load contiguous zone from GeoJSON file
                 if (!map.getSource('contiguous-zone-geojson')) {
+                    const baseUrl = getBaseUrl()
                     map.addSource('contiguous-zone-geojson', {
                         type: 'geojson',
-                        data: './data/contiguous_zone.geojson'
+                        data: `${baseUrl}data/contiguous_zone.geojson`
                     })
                 }
                 
@@ -261,9 +277,10 @@ export function useMapLayers({
         // Always register GeoJSON source so that events without tileset (e.g. justice_2025)
         // can still顯示 even when dataMode === 'tileset'
         if (!map.getSource('exercises-geojson')) {
+            const baseUrl = getBaseUrl()
             map.addSource('exercises-geojson', {
                 type: 'geojson',
-                data: './data/exercises.geojson',
+                data: `${baseUrl}data/exercises.geojson`,
             })
         }
 

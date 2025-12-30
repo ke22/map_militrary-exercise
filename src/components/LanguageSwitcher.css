@@ -1,40 +1,43 @@
+/* Language Switcher - 參照 Mapbox NavigationControl 指北針格式 */
 .language-switcher {
     display: flex;
-    gap: 4px;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    padding: 4px;
-    border-radius: 12px;
-    border: 0.5px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    flex-direction: column;
+    gap: 0;
+    background: var(--bg-panel) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 4px !important;
+    overflow: hidden;
 }
 
 .lang-btn {
-    padding: 6px 12px;
-    font-size: 13px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.7);
-    background: transparent;
+    padding: 0;
+    font-size: 14px; /* 字體更小 */
+    font-weight: 700; /* 粗體 */
+    color: rgba(255, 255, 255, 0.9);
+    background: transparent !important;
     border: none;
-    border-radius: 8px;
+    border-bottom: 1px solid var(--border-color) !important;
+    border-radius: 0;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    min-width: 44px;
-    min-height: 32px;
+    transition: background 0.2s;
+    width: 29px; /* 對齊指北針寬度 */
+    height: 29px; /* 對齊指北針高度 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    text-align: center;
+    margin: 0;
+}
+
+.lang-btn:last-child {
+    border-bottom: none !important;
 }
 
 .lang-btn:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-tertiary) !important;
 }
 
 .lang-btn.active {
-    color: #0c0c0c;
-    background: #ffffff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.lang-btn:active {
-    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.15) !important;
 }

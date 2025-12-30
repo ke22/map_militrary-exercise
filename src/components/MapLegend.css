@@ -1,0 +1,122 @@
+/* Map Legend - Overlay on map */
+.map-legend {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    pointer-events: none;
+    /* 確保不與左側操作界面重疊（260px + 40px spacing） */
+    max-width: calc(100% - 300px);
+    /* 確保不遮擋台灣區域（右下角） */
+    max-height: 30%;
+}
+
+.legend-section {
+    background: rgba(18, 18, 20, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 10px 14px;
+    border: 0.5px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    min-width: 160px;
+}
+
+.legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.legend-label {
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.legend-line {
+    width: 24px;
+    height: 0;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+.legend-line.adiz {
+    /* Map: dash [4, 2], width 0.8, opacity 0.6 */
+    /* 使用 SVG 背景来精确匹配虚线样式 */
+    border-top: none;
+    height: 0.8px;
+    background: repeating-linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.6) 0,
+        rgba(255, 255, 255, 0.6) 4px,
+        transparent 4px,
+        transparent 6px
+    );
+}
+
+.legend-line.median {
+    /* Map: dash [8, 4], width 0.8, opacity 0.6 */
+    /* 使用 SVG 背景来精确匹配虚线样式 */
+    border-top: none;
+    height: 0.8px;
+    background: repeating-linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.6) 0,
+        rgba(255, 255, 255, 0.6) 8px,
+        transparent 8px,
+        transparent 12px
+    );
+}
+
+.legend-line.territorial-sea {
+    border-top: 1.2px solid rgba(255, 68, 68, 0.8);
+}
+
+.legend-line.contiguous-zone {
+    border-top: 0.8px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Mobile adjustments - 與桌面版相同布局 */
+@media (max-width: 768px) {
+    .map-legend {
+        bottom: 10px;
+        right: 10px;
+        left: auto;
+        max-width: calc(100% - 270px);
+    }
+
+    .legend-section {
+        padding: 8px 12px;
+        min-width: 140px;
+    }
+
+    .legend-item {
+        font-size: 11px;
+        gap: 6px;
+    }
+
+    .legend-label {
+        font-size: 11px;
+    }
+
+    .legend-line {
+        width: 20px;
+    }
+}
+

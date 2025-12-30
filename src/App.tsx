@@ -6,6 +6,7 @@ import { ExerciseEvent, DataMode } from './types'
 import eventsData from '../data/events.json'
 import cnaLogo from '../cna_logo.svg'
 import './App.css'
+import './components/MapControls.css'
 
 function App() {
     const [events] = useState<ExerciseEvent[]>(eventsData as ExerciseEvent[])
@@ -66,12 +67,6 @@ VITE_DATA_MODE=mixed`}
         <div className="app">
             <main className="app-main">
                 <div className="map-section">
-                    <div className="language-switcher-overlay">
-                        <LanguageSwitcher
-                            currentLanguage={language}
-                            onLanguageChange={setLanguage}
-                        />
-                    </div>
                     <MapView
                         events={events}
                         selectedEventIds={selectedEventIds}
@@ -79,20 +74,31 @@ VITE_DATA_MODE=mixed`}
                         mapboxToken={mapboxToken}
                         language={language}
                     />
-                    <LayerControl
-                        events={events}
-                        selectedEventIds={selectedEventIds}
-                        onSelectionChange={setSelectedEventIds}
-                        dataMode={dataMode}
-                    />
+                    {/* 地圖內覆蓋層控件 */}
+                    <div className="map-controls-overlay">
+                        <div className="language-switcher-overlay">
+                            <LanguageSwitcher
+                                currentLanguage={language}
+                                onLanguageChange={setLanguage}
+                            />
+                        </div>
+                        {/* Footer - 覆蓋在地圖 canvas 上 */}
+                        <footer className="app-footer">
+                            <div className="footer-content">
+                                <img src={cnaLogo} alt="CNA" className="cna-logo" />
+                                <span className="update-date">更新日期：{updateDate}</span>
+                            </div>
+                        </footer>
+                    </div>
                 </div>
+                {/* 軍演範圍操作界面 - 地圖下方 */}
+                <LayerControl
+                    events={events}
+                    selectedEventIds={selectedEventIds}
+                    onSelectionChange={setSelectedEventIds}
+                    dataMode={dataMode}
+                />
             </main>
-            <footer className="app-footer">
-                <div className="footer-content">
-                    <img src={cnaLogo} alt="CNA" className="cna-logo" />
-                    <span className="update-date">更新日期：{updateDate}</span>
-                </div>
-            </footer>
         </div>
     )
 }

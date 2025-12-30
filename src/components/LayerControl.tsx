@@ -27,64 +27,43 @@ export function LayerControl({
 
     return (
         <div className="layer-control ios-style">
-            {/* Header */}
-            <div className="control-header">
-                <h3>軍演範圍</h3>
-                <span className="selection-count">
-                    {selectedEventIds.length} / {events.length}
-                </span>
-            </div>
+            <div className="control-content">
+                {/* Header */}
+                <div className="control-header">
+                    <h3>軍演範圍</h3>
+                    <span className="selection-count">
+                        {selectedEventIds.length} / {events.length}
+                    </span>
+                </div>
 
-
-
-            {/* Checkbox List */}
-            <div className="checkbox-list scrollable">
-                {sortedEvents.map((event) => (
-                    <div key={event.eventId} className="apple-row" onClick={() => handleToggle(event.eventId)}>
-                        <div className="apple-checkbox-container">
-                            <input
-                                type="checkbox"
-                                className="apple-checkbox"
-                                checked={selectedEventIds.includes(event.eventId)}
-                                readOnly
-                            />
-                        </div>
-                        <div className="row-content">
+                {/* Checkbox List */}
+                <div className="checkbox-list scrollable">
+                {sortedEvents.map((event) => {
+                    const isSelected = selectedEventIds.includes(event.eventId)
+                    return (
+                        <div key={event.eventId} className="apple-row" onClick={() => handleToggle(event.eventId)}>
                             <div className="title-row">
-                                <span className="dot" style={{ backgroundColor: event.color }} />
+                                <button
+                                    className="color-toggle-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleToggle(event.eventId)
+                                    }}
+                                    style={{
+                                        backgroundColor: isSelected ? event.color : 'rgba(100, 100, 100, 0.5)',
+                                        borderColor: isSelected ? event.color : 'rgba(150, 150, 150, 0.5)'
+                                    }}
+                                    aria-label={event.title}
+                                />
                                 <span className="title">{event.title}</span>
                             </div>
                             <span className="subtitle">{event.dateLabel}</span>
                         </div>
-                    </div>
-                ))}
-            </div>
-
-            <div className="section-divider" />
-
-            {/* Reference Legend */}
-            <div className="reference-section">
-                <div className="ref-items">
-                    <div className="ref-item">
-                        <span className="ref-line adiz" />
-                        <span>ADIZ 防空識別區</span>
-                    </div>
-                    <div className="ref-item">
-                        <span className="ref-line median" />
-                        <span>海峽中線</span>
-                    </div>
-                    <div className="ref-item">
-                        <span className="ref-line territorial-sea" />
-                        <span>領海</span>
-                    </div>
-                    <div className="ref-item">
-                        <span className="ref-line contiguous-zone" />
-                        <span>鄰接區</span>
-                    </div>
+                    )
+                })}
                 </div>
+
             </div>
-
-
         </div>
     )
 }

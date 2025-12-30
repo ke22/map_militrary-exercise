@@ -1,23 +1,30 @@
 .layer-control.ios-style {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 240px;
-    max-height: 100vh;
+    position: relative; /* 改為相對定位，放在地圖下方 */
+    width: 100%;
+    height: auto; /* 高度包覆內容 */
+    margin-top: 0; /* 緊貼地圖下方，無間隙 */
     background: rgba(18, 18, 20, 0.9);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 0 0 16px 0;
+    border-radius: 0;
     border: none;
-    border-right: 0.5px solid rgba(255, 255, 255, 0.15);
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.15);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 16px;
     z-index: 1001;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
     color: white;
+    box-sizing: border-box;
+}
+
+.control-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    /* 移除 overflow: hidden，允許內容自然滾動 */
 }
 
 /* Header */
@@ -42,90 +49,81 @@
 
 
 
-/* Row Styling */
+/* Row Styling - 水平排列 */
 .checkbox-list.scrollable {
-    flex: 1;
-    overflow-y: auto;
-    margin: 0 -10px;
-    padding: 0 10px;
+    display: flex;
+    flex-direction: row; /* 水平排列 */
+    gap: 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 0;
+    margin: 0;
 }
 
 .apple-row {
     display: flex;
+    flex-direction: column; /* 垂直排列內容 */
     align-items: center;
-    gap: 12px;
-    padding: 12px;
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
     cursor: pointer;
-    transition: background 0.2s;
-    min-height: 56px;
-}
-
-.apple-row:hover {
+    transition: all 0.2s;
+    min-width: 120px; /* 設置最小寬度 */
+    flex-shrink: 0; /* 防止壓縮 */
     background: rgba(255, 255, 255, 0.05);
 }
 
-.apple-checkbox-container {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.apple-row:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
-.apple-checkbox {
-    width: 22px;
-    height: 22px;
-    border-radius: 11px;
-    appearance: none;
-    background: transparent;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    position: relative;
+.color-toggle-btn {
+    width: 16px; /* 小一半 */
+    height: 16px; /* 小一半 */
+    border-radius: 50%; /* 圓型 */
+    border: 2px solid;
     cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    padding: 0;
+    margin: 0;
+    outline: none;
 }
 
-.apple-checkbox:checked {
-    background: #007aff;
-    border-color: #007aff;
+.color-toggle-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.apple-checkbox:checked::after {
-    content: '✓';
-    position: absolute;
-    color: white;
-    font-size: 14px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+.color-toggle-btn:active {
+    transform: scale(0.95);
 }
 
-.row-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
+/* row-content 已移除，直接使用 title-row 和 subtitle */
 
 .title-row {
     display: flex;
+    flex-direction: row; /* 水平排列：燈號在前，名稱在後 */
     align-items: center;
     gap: 8px;
-}
-
-.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+    justify-content: center;
 }
 
 .title {
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
 }
 
 .subtitle {
-    font-size: 13px;
+    font-size: 11px;
     color: var(--text-secondary);
+    text-align: center;
 }
 
 /* Overlap Section */
@@ -248,15 +246,15 @@
     margin: 4px -20px;
 }
 
-/* Mobile */
+/* Mobile - 與桌面版相同，位於地圖下方 */
 @media (max-width: 768px) {
     .layer-control.ios-style {
-        position: static;
-        width: 100%;
-        max-height: none;
-        border-radius: 0;
-        border: none;
-        border-top: 0.5px solid var(--border-color);
-        background: rgba(0, 0, 0, 0.8);
+        position: relative; /* 與桌面版相同，位於地圖下方 */
+        padding: 16px;
+    }
+
+    .map-controls-overlay .language-switcher-overlay {
+        top: 108px;
+        right: 10px;
     }
 }

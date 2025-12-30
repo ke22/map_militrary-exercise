@@ -3,6 +3,7 @@ import mapboxgl from 'mapbox-gl'
 import { ExerciseEvent, DataMode } from '../types'
 import { useMapLayers } from '../hooks/useMapLayers'
 import { LanguageCode } from './LanguageSwitcher'
+import { MapLegend } from './MapLegend'
 import './MapView.css'
 
 interface MapViewProps {
@@ -48,7 +49,7 @@ export function MapView({
                 style: 'mapbox://styles/mapbox/dark-v11',
                 center: [121.0, 23.5],
                 zoom: 5.5,
-                cooperativeGestures: true,
+                cooperativeGestures: false, // 允许单指拖动地图
                 attributionControl: true,
             })
 
@@ -63,14 +64,24 @@ export function MapView({
 
             map.on('error', (e) => {
                 console.error('Mapbox error:', e)
+                const error = e.error as any
+                console.error('Error details:', {
+                    message: error?.message,
+                    type: error?.type,
+                    status: error?.status,
+                    url: error?.url,
+                    originalError: error
+                })
                 // Check for WebGL support
-                if (e.error?.message?.includes('WebGL') || e.error?.message?.includes('webgl')) {
+                if (error?.message?.includes('WebGL') || error?.message?.includes('webgl')) {
                     setError('您的瀏覽器不支援 WebGL，請使用更新的瀏覽器（Chrome、Firefox、Safari、Edge）')
                 }
                 // Only set error if it's a fatal initialization error
-                else if (e.error?.message?.includes('token') || (e.error as any)?.status === 401) {
+                else if (error?.message?.includes('token') || error?.status === 401) {
                     setError('Mapbox Token 無效或已過期')
                 }
+                // Don't set error for non-fatal errors (like style/source loading issues)
+                // These are usually handled gracefully by Mapbox
             })
 
         } catch (err) {
@@ -168,6 +179,8 @@ export function MapView({
                 </div>
             )}
             <div ref={mapContainerRef} className="map-container" />
+            {/* 地圖內參考圖層圖例 - 固定顯示 */}
+            <MapLegend />
         </div>
     )
 }

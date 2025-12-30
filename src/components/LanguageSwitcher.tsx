@@ -7,10 +7,10 @@ interface LanguageSwitcherProps {
     onLanguageChange: (lang: LanguageCode) => void
 }
 
-const languages: { code: LanguageCode; label: string }[] = [
-    { code: 'zh-Hant', label: '繁中' },
-    { code: 'en', label: 'English' },
-    { code: 'ja', label: '日本語' },
+const languages: { code: LanguageCode; label: string; char: string }[] = [
+    { code: 'zh-Hant', label: '繁中', char: '中' },
+    { code: 'en', label: 'English', char: 'E' },
+    { code: 'ja', label: '日本語', char: '日' },
 ]
 
 export function LanguageSwitcher({
@@ -25,7 +25,7 @@ export function LanguageSwitcher({
                     className={`lang-btn ${currentLanguage === lang.code ? 'active' : ''}`}
                     onClick={() => onLanguageChange(lang.code)}
                 >
-                    {lang.label}
+                    {lang.char}
                 </button>
             ))}
         </div>

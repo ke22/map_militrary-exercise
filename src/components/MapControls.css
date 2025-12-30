@@ -1,0 +1,98 @@
+/* Map Controls Overlay - 地圖內控制元素容器 */
+.map-controls-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* 語言切換器 - 地圖內右上角，緊貼放大縮小控件下方 */
+/* Mapbox NavigationControl 通常在 top-right，高度約 100px */
+.map-controls-overlay .language-switcher-overlay {
+    position: absolute;
+    top: 108px; /* 緊貼 NavigationControl 下方（100px + 8px spacing） */
+    right: 20px;
+    z-index: 1001;
+    pointer-events: auto;
+    /* 參照 NavigationControl 樣式 */
+}
+
+/* 操作界面已移至地圖下方，不在 overlay 中 */
+.map-controls-overlay .layer-control.ios-style {
+    display: none; /* 移除 overlay 中的樣式 */
+}
+
+/* Footer - 覆蓋在地圖 canvas 上，位於左下角 Mapbox logo 右側 */
+.map-controls-overlay .app-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    z-index: 1; /* 確保在 Mapbox attribution 之下，避免覆蓋 logo */
+    display: flex;
+    align-items: center;
+    padding: 0;
+    background: transparent; /* 移除底色 */
+    border: none;
+    pointer-events: auto;
+    /* 確保 footer 不會影響 Mapbox logo 的清晰度 */
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    /* 與 Mapbox attribution 相同的 padding，確保水平對齊 */
+    padding-left: 10px;
+    padding-bottom: 10px;
+}
+
+.map-controls-overlay .app-footer .footer-content {
+    display: flex;
+    align-items: center;
+    gap: 16px; /* 統一的間距 */
+    margin-left: 110px; /* Mapbox attribution 約 100-110px，精確對齊 */
+}
+
+.map-controls-overlay .app-footer .cna-logo {
+    height: 20px; /* 與 Mapbox logo 高度相近，確保視覺平衡 */
+    width: auto;
+    opacity: 0.9;
+    display: block; /* 確保沒有額外間距 */
+}
+
+.map-controls-overlay .app-footer .update-date {
+    font-size: 10px; /* 與 Mapbox attribution 字體大小相近 (9px) */
+    color: rgba(255, 255, 255, 0.6); /* 與 Mapbox attribution 顏色相近 */
+    font-weight: 400;
+    line-height: 1.2; /* 確保垂直居中 */
+    white-space: nowrap; /* 防止換行 */
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .map-controls-overlay .app-footer {
+        padding-left: 8px;
+        padding-bottom: 8px;
+    }
+
+    .map-controls-overlay .app-footer .footer-content {
+        margin-left: 95px; /* 移動版 Mapbox attribution 稍小，精確對齊 */
+        gap: 12px; /* 移動版稍小的間距 */
+    }
+
+    .map-controls-overlay .app-footer .cna-logo {
+        height: 18px; /* 移動版稍小 */
+    }
+
+    .map-controls-overlay .app-footer .update-date {
+        font-size: 9px; /* 移動版稍小，與 Mapbox attribution 一致 */
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .map-controls-overlay .language-switcher-overlay {
+        top: 108px;
+        right: 10px;
+    }
+}

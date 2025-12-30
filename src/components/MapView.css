@@ -2,12 +2,11 @@
   position: relative;
   width: 100%;
   height: clamp(400px, 65vh, 650px);
-  border-radius: 4px;
+  border-radius: 0; /* 移除圓角，緊貼操作界面 */
   overflow: hidden;
-  border: 1px solid var(--border-color);
-  box-shadow:
-    0 0 40px rgba(0, 0, 0, 0.5),
-    inset 0 0 60px rgba(0, 0, 0, 0.3);
+  border: none; /* 移除邊框 */
+  border-bottom: none; /* 確保底部無邊框 */
+  box-shadow: none; /* 移除陰影，避免視覺間隙 */
 }
 
 .map-container {
@@ -104,10 +103,45 @@
   font-size: 9px !important;
   background: rgba(10, 10, 15, 0.8) !important;
   color: var(--text-muted) !important;
+  /* 確保不受 backdrop-filter 影響，保持清晰 */
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  /* 確保 Mapbox attribution 在最上層，避免被 footer 覆蓋 */
+  z-index: 10 !important;
+  position: relative !important;
+  /* 強制 GPU 加速，確保清晰渲染 */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: auto;
 }
 
 .mapboxgl-ctrl-attrib a {
   color: var(--text-muted) !important;
+}
+
+/* 確保 Mapbox logo 清晰顯示，不受任何模糊效果影響 */
+.mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-logo *,
+.mapboxgl-ctrl-attrib .mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-attrib img,
+.mapboxgl-ctrl-attrib a img,
+.mapboxgl-ctrl-attrib svg {
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: crisp-edges !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  /* 強制 GPU 加速 */
+  transform: translateZ(0) !important;
+  -webkit-transform: translateZ(0) !important;
+  will-change: auto !important;
+  -webkit-backface-visibility: visible !important;
+  backface-visibility: visible !important;
+  /* 確保沒有透明度影響 */
+  opacity: 1 !important;
 }
 
 .mapboxgl-popup-content {
