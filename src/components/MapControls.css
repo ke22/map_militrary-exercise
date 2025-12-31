@@ -9,15 +9,14 @@
     z-index: 1000;
 }
 
-/* 語言切換器 - 地圖內右上角，緊貼放大縮小控件下方 */
-/* Mapbox NavigationControl 通常在 top-right，高度約 100px */
+/* 語言切換器 - 地圖內右上角，位於指南針（NavigationControl）下方，右側垂直對齊 */
+/* Mapbox NavigationControl 默認在 top-right，right: 10px，高度約 100px，寬度 29px */
 .map-controls-overlay .language-switcher-overlay {
     position: absolute;
-    top: 108px; /* 緊貼 NavigationControl 下方（100px + 8px spacing） */
-    right: 20px;
+    top: 108px; /* NavigationControl 下方（100px 高度 + 8px 間距） */
+    right: 10px; /* 與 NavigationControl 右側垂直對齊（Mapbox 默認 10px） */
     z-index: 1001;
     pointer-events: auto;
-    /* 參照 NavigationControl 樣式 */
 }
 
 /* 操作界面已移至地圖下方，不在 overlay 中 */

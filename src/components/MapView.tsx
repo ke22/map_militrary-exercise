@@ -169,30 +169,22 @@ export function MapView({
             return
         }
         
-        // 创建带样式的标记元素
+        // 创建带样式的标记元素（只显示文字，无背景）
         const createLabelElement = (text: string) => {
             const el = document.createElement('div')
             el.className = 'japan-label-marker'
             el.textContent = text
             
-            // 应用样式
+            // 应用样式（只保留文字，移除所有背景和边框）
             Object.assign(el.style, {
-                background: 'rgba(28, 28, 30, 0.95)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
                 color: '#ffffff',
-                padding: '8px 14px',
-                borderRadius: '6px',
-                fontSize: '13px',
+                fontSize: '14px',
                 fontWeight: '600',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
                 whiteSpace: 'nowrap',
                 pointerEvents: 'none',
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                letterSpacing: '0.3px',
-                zIndex: '1000',
-                transition: 'all 0.3s ease'
+                textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 0 2px rgba(0, 0, 0, 0.8)',
+                zIndex: '1000'
             })
             
             return el
