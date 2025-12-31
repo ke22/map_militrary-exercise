@@ -4,7 +4,8 @@ import { LayerControl } from './components/LayerControl'
 import { LanguageSwitcher, LanguageCode } from './components/LanguageSwitcher'
 import { ExerciseEvent, DataMode } from './types'
 import eventsData from '../data/events.json'
-import cnaLogo from '../cna_logo.svg'
+// 暫時隱藏 CNA logo
+// import cnaLogo from '../cna_logo.svg'
 import './App.css'
 import './components/MapControls.css'
 
@@ -85,7 +86,8 @@ VITE_DATA_MODE=mixed`}
                         {/* Footer - 覆蓋在地圖 canvas 上 */}
                         <footer className="app-footer">
                             <div className="footer-content">
-                                <img src={cnaLogo} alt="CNA" className="cna-logo" />
+                                {/* 暫時隱藏 CNA logo */}
+                                {/* <img src={cnaLogo} alt="CNA" className="cna-logo" /> */}
                                 <span className="update-date">更新日期：{updateDate}</span>
                             </div>
                         </footer>

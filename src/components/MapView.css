@@ -195,30 +195,25 @@
   color: var(--text-primary) !important;
 }
 
-/* Japan label marker */
+/* Japan label marker - 只显示文字，无背景框 */
 .japan-label-marker {
-  background: rgba(28, 28, 30, 0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   color: #ffffff;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 13px;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  font-size: 14px;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: none !important;
   white-space: nowrap;
   pointer-events: none;
-  box-shadow: 
-    0 2px 12px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: none !important;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-  letter-spacing: 0.3px;
-  transition: all 0.3s ease;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 2px rgba(0, 0, 0, 0.8);
 }
 
 .japan-label-marker:hover {
-  transform: scale(1.05);
-  box-shadow: 
-    0 4px 16px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.2);
+  transform: none !important;
+  box-shadow: none !important;
 }
